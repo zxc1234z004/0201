@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        body {
+        /*body {
             font-family: 'Noto Serif TC', serif;
             margin: 0;
             padding: 0;
@@ -21,7 +21,7 @@
             overflow: hidden;
             color: #FEF3C7;
             -webkit-tap-highlight-color: transparent;
-        }
+        }*/
 
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #D4C4B7; border-radius: 2px; }
@@ -60,8 +60,6 @@
             .mobile-title { font-size: 3rem !important; }
             .mobile-subtitle { font-size: 1.2rem !important; }
         }
-
-        .safe-area-pb { padding-bottom: calc(2rem + env(safe-area-inset-bottom)); }
     </style>
 </head>
 <body>
@@ -70,54 +68,35 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- 資源路徑設定 (使用穩定 CDN 資源) ---
-        const CLOUD_IMAGE_URL = 'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=2071&auto=format&fit=crop'; 
+        // --- 資源路徑設定 ---
+        const BGM_URL = './assets/bgm.mp3'; 
+        const CLOUD_IMAGE_URL = './assets/cloud.png';
 
-        // --- 完整 64 卦資料索引 ---
-        const hexagramNames = [
-            "乾為天", "坤為地", "水雷屯", "山水蒙", "水天需", "天水訟", "地水師", "水地比",
-            "風天小畜", "天澤履", "地天泰", "天地否", "天火同人", "火天大有", "地山謙", "雷地豫",
-            "澤雷隨", "山風蠱", "地澤臨", "風地觀", "火雷噬嗑", "山火賁", "山地剝", "地雷復",
-            "天雷無妄", "山天大畜", "山雷頤", "澤風大過", "坎為水", "離為火", "澤山咸", "雷風恆",
-            "天山遯", "雷天大壯", "火地晉", "地火明夷", "風火家人", "火澤睽", "水山蹇", "雷水解",
-            "山澤損", "風雷益", "澤天夬", "天風姤", "澤地萃", "地風升", "澤水困", "地風井",
-            "澤火革", "火風鼎", "震為雷", "艮為山", "風山漸", "雷澤歸妹", "雷火豐", "火山旅",
-            "巽為風", "兌為澤", "風水渙", "水澤節", "風澤中孚", "雷山小過", "水火既濟", "火水未濟"
+        // --- 卦象資料庫 (已完全移除特殊 Unicode 符號) ---
+        const hexagramsBase = [
+            { id: 1, name: "乾卦", meaning: "剛健中正", text: "元亨利貞。大哉乾元，萬物資始，乃統天。", image: "天行健，君子以自強不息。", lucky: "大展宏圖" },
+            { id: 2, name: "坤卦", meaning: "柔順寬容", text: "元亨，利牝馬之貞。君子有攸往，先迷後得主。", image: "地勢坤，君子以厚德載物。", lucky: "厚德載物" },
+            { id: 63, name: "既濟", meaning: "大功告成", text: "亨，小利貞，初吉終亂。", image: "水在火上，既濟；君子以思患而預防之。", lucky: "功德圓滿" },
+            { id: 64, name: "未濟", meaning: "未竟之志", text: "亨，小狐汔濟，濡其尾，無攸利。", image: "火在水上，未濟；君子以慎辨物居方。", lucky: "重新出發" }
         ];
-
-        const hexagramDetails = {
-            1: { meaning: "剛健中正", text: "元亨利貞。天行健，君子以自強不息。", lucky: "大展宏圖" },
-            2: { meaning: "柔順寬容", text: "地勢坤，君子以厚德載物。利牝馬之貞。", lucky: "厚德載物" },
-            63: { meaning: "大功告成", text: "亨小利貞，初吉終亂。水在火上，既濟。", lucky: "功德圓滿" },
-            64: { meaning: "未竟之志", text: "亨，小狐汔濟，濡其尾，無攸利。", lucky: "重新出發" }
-        };
 
         const fullHexagramData = Array.from({ length: 64 }, (_, i) => {
             const id = i + 1;
-            const detail = hexagramDetails[id] || { 
-                meaning: "心誠則靈", 
-                text: "吉人自有天相，誠心祈求，必有迴響。順天應人，萬事大吉。", 
-                lucky: "萬事如意" 
-            };
-            return {
-                id,
-                name: hexagramNames[i],
-                image: `第 ${id} 卦 · ${hexagramNames[i]}`,
-                ...detail,
-                lines: [
-                    "初爻：潛心修養，靜待時機。",
-                    "二爻：貴人顯現，事半功倍。",
-                    "三爻：勤勉不懈，必有後福。",
-                    "四爻：進退有據，左右逢源。",
-                    "五爻：運勢鼎盛，大吉大利。",
-                    "上爻：慎終如始，永保吉泰。"
-                ]
+            const base = hexagramsBase.find(h => h.id === id);
+            return base ? {
+                ...base,
+                lines: [`初爻：潛心修養`, `二爻：運勢漸展`, `三爻：謹慎行事`, `四爻：進退有據`, `五爻：大吉大利`, `上爻：慎終如始`]
+            } : {
+                id, name: "吉卦", meaning: "心誠則靈", text: "吉人自有天相，誠心祈求，必有迴響。", image: "厚德載物", lucky: "萬事如意",
+                lines: ["初爻：平安即是福", "二爻：貴人相助", "三爻：小有波折", "四爻：雲開見月", "五爻：福星高照", "上爻：知足常樂"]
             };
         });
 
         // --- UI 元件 ---
         const Icon = ({ name, size = 24, className = "" }) => {
-            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name, size]);
+            useEffect(() => { 
+                if (window.lucide) window.lucide.createIcons(); 
+            }, [name, size]);
             return <i data-lucide={name} className={`${className} notranslate`} style={{ width: size + 'px', height: size + 'px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}></i>;
         };
 
@@ -129,6 +108,10 @@
                 <text x="25" y="40" textAnchor="middle" fill="white" fontSize="28" fontWeight="bold">寶</text>
                 <text x="25" y="80" textAnchor="middle" fill="white" fontSize="28" fontWeight="bold">宮</text>
             </svg>
+        );
+
+        const CloudImage = ({ className, style }) => (
+            <img src={CLOUD_IMAGE_URL} alt="Cloud" className={`${className} transparent-media`} style={{...style, objectFit: 'contain'}} />
         );
 
         const CornerDecor = ({ className }) => (
@@ -147,18 +130,20 @@
             const [isMusicPlaying, setIsMusicPlaying] = useState(false);
             
             const bgmRef = useRef(null);
+            const doorSoundRef = useRef(null);
 
             useEffect(() => {
-                // 背景音樂使用穩定 URL
-                const bgm = new Audio('https://assets.mixkit.co/music/preview/mixkit-zen-meditation-441.mp3');
+                const bgm = new Audio(BGM_URL);
                 bgm.loop = true;
+                bgm.volume = 0.5;
                 bgmRef.current = bgm;
+                doorSoundRef.current = new Audio('https://actions.google.com/sounds/v1/doors/wood_door_open.ogg');
                 return () => { if (bgmRef.current) bgmRef.current.pause(); };
             }, []);
 
             const handleStart = () => {
                 if (bgmRef.current) {
-                    bgmRef.current.play().then(() => setIsMusicPlaying(true)).catch(() => {});
+                    bgmRef.current.play().then(() => setIsMusicPlaying(true)).catch(e => console.warn("Audio Context Error"));
                 }
                 setView('intro');
             };
@@ -173,14 +158,12 @@
             const processSelection = (e) => {
                 e?.preventDefault();
                 const num = parseInt(hexNum);
-                if (!num || isNaN(num) || num < 1 || num > 64) {
-                    return;
-                }
+                if (!num || isNaN(num) || num < 1 || num > 64) return;
                 setIsLoading(true);
                 setSelectedHex(fullHexagramData.find(h => h.id === num));
-                
                 setTimeout(() => {
                     setView('animating');
+                    if (doorSoundRef.current) doorSoundRef.current.play().catch(() => {});
                     setTimeout(() => setShowFlash(true), 1200);
                     setTimeout(() => {
                         setView('result');
@@ -195,21 +178,23 @@
             return (
                 <div className="relative w-full h-screen overflow-hidden bg-[#2C0A0A] flex flex-col font-serif text-yellow-50">
                     
-                    {/* 全域背景圖層 */}
+                    {/* 全域背景 */}
                     <div className="absolute inset-0 z-0 opacity-40">
-                        <img src="https://images.unsplash.com/photo-1590059393946-834992931e07?q=80&w=2070&auto=format&fit=crop" alt="Palace" className="w-full h-full object-cover" />
+                        <img src="https://images.unsplash.com/photo-1599528766185-5b4372995974?q=80&w=2070&auto=format&fit=crop" alt="Palace" className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-b from-[#2C0A0A]/90 via-transparent to-[#2C0A0A]"></div>
                     </div>
 
-                    {/* 歡迎畫面 */}
+                    {/* 歡迎畫面 (深度清理標籤間空格) */}
                     {view === 'welcome' && (
-                        <div className="absolute inset-0 z-[200] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in text-center px-6">
+                        <div className="absolute inset-0 z-[200] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in text-center px-6 overflow-hidden">
+                            <CloudImage className="absolute top-[10%] left-[-10%] w-[120%] opacity-20 animate-float" />
+                            <CloudImage className="absolute bottom-[10%] right-[-10%] w-[120%] opacity-20 animate-float" style={{animationDelay: '-4s'}} />
                             <div className="mb-10 relative z-10">
-                                <h1 className="text-6xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-[#FCD34D] to-[#B45309] tracking-[0.2em] drop-shadow-2xl mobile-title">金馬鴻運</h1>
+                                <h1 className="text-5xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-[#FCD34D] to-[#B45309] tracking-[0.2em] drop-shadow-2xl mobile-title text-yellow-50">金馬鴻運</h1>
                                 <p className="text-yellow-200/80 tracking-[0.4em] text-lg md:text-2xl mt-4 uppercase mobile-subtitle">崇正寶宮 - 靈籤指引</p>
                             </div>
                             <button onClick={handleStart} className="px-12 py-5 bg-gradient-to-r from-[#B45309] to-[#D97706] text-white rounded-full text-2xl font-bold shadow-2xl flex items-center gap-4 relative z-10 active:scale-95 transition-all">
-                                <Icon name="sparkles" size={28} />
+                                <Icon name="music" size={28} />
                                 <span>進入聚福堂</span>
                             </button>
                         </div>
@@ -222,12 +207,19 @@
                         </button>
                     )}
 
+                    {/* 首頁裝飾層 */}
+                    <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+                        <CloudImage className="absolute top-[5%] left-[2%] w-64 md:w-96 opacity-40 animate-float" />
+                        <CloudImage className="absolute top-[40%] right-[-10%] w-64 md:w-80 opacity-30 animate-float" style={{animationDelay: '4s'}} />
+                        <CloudImage className="absolute bottom-[5%] left-[5%] w-72 md:w-96 opacity-40 animate-float" style={{animationDelay: '6s'}} />
+                    </div>
+
                     {/* 首頁介面 */}
                     {view === 'intro' && (
                         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center px-4 animate-fade-in text-center">
                             <div className="mb-12">
                                 <span className="text-yellow-400 text-xs tracking-[0.6em] uppercase block mb-3 font-bold opacity-80">Gold Horse Fortune</span>
-                                <h1 className="text-6xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-[#FCD34D] to-[#B45309] tracking-[0.1em] drop-shadow-xl mobile-title">金馬鴻運</h1>
+                                <h1 className="text-5xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-[#FCD34D] to-[#B45309] tracking-[0.1em] drop-shadow-xl mobile-title text-yellow-50">金馬鴻運</h1>
                                 <h2 className="text-3xl md:text-5xl font-bold text-[#FCD34D] mt-1 drop-shadow-lg opacity-90">聚福堂</h2>
                             </div>
 
@@ -238,15 +230,8 @@
                                         <span className="text-[#FCD34D] text-sm font-bold tracking-widest uppercase">誠心祈求 - 靈籤指引</span>
                                     </div>
                                     <form onSubmit={processSelection} className="w-full flex flex-col gap-8">
-                                        <input 
-                                            type="number" 
-                                            placeholder="1-64" 
-                                            value={hexNum} 
-                                            onChange={(e) => setHexNum(e.target.value)} 
-                                            className="w-full bg-black/60 border border-[#FCD34D]/30 text-[#FCD34D] text-5xl text-center py-4 rounded-lg focus:outline-none focus:border-[#FCD34D] font-serif" 
-                                            autoFocus 
-                                        />
-                                        <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-[#B45309] to-[#D97706] text-white py-4 rounded-lg text-xl font-bold shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all tracking-widest">
+                                        <input type="number" placeholder="籤號 (1-64)" value={hexNum} onChange={(e) => setHexNum(e.target.value)} className="w-full bg-black/60 border border-[#FCD34D]/30 text-[#FCD34D] text-5xl text-center py-4 rounded-lg focus:outline-none focus:border-[#FCD34D] font-serif" autoFocus />
+                                        <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-[#B45309] to-[#D97706] text-white py-4 rounded-lg text-xl font-bold shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all font-serif uppercase tracking-widest">
                                             {isLoading ? <Icon name="refresh-cw" className="animate-spin" /> : <Icon name="sparkles" />}
                                             開啟鴻運
                                         </button>
@@ -260,15 +245,21 @@
                     {view === 'animating' && (
                         <div className="absolute inset-0 z-150 flex items-end justify-center overflow-hidden perspective-container">
                             <div className="relative w-full h-full flex items-end justify-center">
-                                <div className={`absolute inset-0 bg-white/30 z-0 transition-opacity duration-1000 ${showFlash ? 'opacity-100' : 'opacity-0'}`}></div>
+                                <div className={`absolute inset-0 bg-white/20 z-0 transition-opacity duration-1000 ${showFlash ? 'opacity-100' : 'opacity-0'}`}></div>
                                 <div className="w-1/2 h-full bg-[#3e0000] border-r-2 border-black/40 z-10 relative flex flex-col items-center pt-32 origin-left animate-door-l shadow-xl" 
                                      style={{backgroundImage: 'url(https://www.transparenttextures.com/patterns/wood-pattern.png)'}}>
+                                    <div className="grid grid-cols-2 gap-6 mt-10 opacity-60">
+                                        {[...Array(6)].map((_,i) => <div key={i} className="w-4 h-4 rounded-full bg-gradient-to-br from-[#FCD34D] to-[#B45309]"></div>)}
+                                    </div>
                                     <div className="w-16 h-16 rounded-full border-4 border-[#B45309] flex items-center justify-center bg-[#5c0b0b] absolute right-2 top-1/2 -translate-y-1/2">
                                         <div className="w-10 h-10 rounded-full border-2 border-[#FCD34D]/50"></div>
                                     </div>
                                 </div>
                                 <div className="w-1/2 h-full bg-[#3e0000] border-l-2 border-black/40 z-10 relative flex flex-col items-center pt-32 origin-right animate-door-r shadow-xl"
                                      style={{backgroundImage: 'url(https://www.transparenttextures.com/patterns/wood-pattern.png)'}}>
+                                    <div className="grid grid-cols-2 gap-6 mt-10 opacity-60">
+                                        {[...Array(6)].map((_,i) => <div key={i} className="w-4 h-4 rounded-full bg-gradient-to-br from-[#FCD34D] to-[#B45309]"></div>)}
+                                    </div>
                                     <div className="w-16 h-16 rounded-full border-4 border-[#B45309] flex items-center justify-center bg-[#5c0b0b] absolute left-2 top-1/2 -translate-y-1/2">
                                         <div className="w-10 h-10 rounded-full border-2 border-[#FCD34D]/50"></div>
                                     </div>
@@ -279,57 +270,58 @@
 
                     {/* 解籤結果頁面 */}
                     {view === 'result' && selectedHex && (
-                        <div className="absolute inset-0 z-[60] bg-[#F5F5F0] text-[#2a0a0a] overflow-y-auto animate-fade-in custom-scrollbar">
+                        <div className="absolute inset-0 z-[60] bg-[#F5F5F0] text-[#2a0a0a] overflow-y-auto animate-fade-in custom-scrollbar text-yellow-950">
                             <div className="w-full max-w-2xl mx-auto p-4 md:p-10 flex flex-col items-center pb-32">
                                 <div className="w-full flex justify-start mb-6 sticky top-0 bg-[#F5F5F0]/90 backdrop-blur-md py-3 z-20 border-b border-[#D4C4B7]">
                                     <button onClick={reset} className="flex items-center gap-2 text-[#991B1B] font-bold text-lg">
                                         <Icon name="chevron-left" size={24} /> 重返聚福堂
                                     </button>
                                 </div>
-                                
-                                <div className="bg-white rounded-2xl shadow-xl border w-full flex flex-col items-center relative overflow-hidden text-center pb-8">
-                                    <div className="h-20 bg-[#991B1B] w-full flex items-center justify-center shadow-inner">
-                                        <span className="text-yellow-100 text-xl tracking-widest font-bold">崇 正 寶 宮 · 靈 籤</span>
+                                <div className="bg-white rounded-2xl shadow-xl border w-full flex flex-col items-center relative overflow-hidden text-center">
+                                    <div className="h-16 md:h-24 bg-[#991B1B] absolute top-0 left-0 w-full flex items-center justify-around px-4 overflow-hidden relative shadow-inner">
+                                        <CloudImage className="w-32 opacity-40" />
+                                        <CloudImage className="w-40 opacity-50" />
+                                        {[...Array(4)].map((_, i) => <Icon key={i} name="sparkles" className="text-yellow-50/20" size={16} />)}
                                     </div>
                                     
                                     <div className="p-6 md:p-12 flex flex-col items-center relative z-10 w-full">
-                                        <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-[#B45309]/20 flex items-center justify-center bg-[#FFFBEB] text-[#991B1B] mb-8 shadow-inner">
-                                            <Icon name="sparkles" size={48} className="opacity-80" />
+                                        {/* 卦象圖案已換成穩定的 Lucide 圖誌，徹底解決問號方塊問題 */}
+                                        <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#B45309]/20 flex items-center justify-center bg-[#FFFBEB] text-[#991B1B] mb-8 shadow-inner">
+                                            <Icon name="sparkles" size={64} className="opacity-80" />
                                         </div>
                                         
-                                        <h2 className="text-3xl md:text-4xl font-bold mb-2 text-[#2C0A0A] font-serif">{selectedHex.name}</h2>
-                                        <h3 className="text-xl md:text-2xl text-[#B45309] mb-4">— {selectedHex.meaning} —</h3>
-                                        
-                                        <div className="w-full bg-[#FAFAF9] p-6 rounded-xl border-l-4 border-[#B45309] mb-8 text-xl leading-relaxed font-serif shadow-sm text-gray-800 text-left">
+                                        <h2 className="text-2xl md:text-4xl font-bold mb-2 text-[#2C0A0A] font-serif">{selectedHex.name} - {selectedHex.meaning}</h2>
+                                        <p className="text-[#B45309] italic text-base md:text-xl mb-8">「{selectedHex.image}」</p>
+                                        <div className="w-full bg-[#FAFAF9] p-5 rounded-xl border-l-4 border-[#B45309] mb-8 text-xl leading-relaxed font-serif shadow-sm text-gray-800 text-left">
                                             {selectedHex.text}
                                         </div>
-                                        
                                         <div className="w-full space-y-4 text-left font-serif">
                                             <h3 className="font-bold text-[#7F1D1D] text-lg border-b border-[#D4C4B7] pb-1 mb-4">六爻詳解</h3>
                                             {selectedHex.lines.map((line, idx) => (
                                                 <div key={idx} className="flex gap-4 py-3 border-b border-gray-100 text-gray-700 text-base">
                                                     <span className="font-bold text-[#991B1B] min-w-[3.5rem]">{line.split('：')[0]}</span>
-                                                    <span>{line.split('：')[1]}</span>
+                                                    <span>{line.split('：')[1] || line}</span>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
+                                    <div className="h-4 bg-[#991B1B] w-full"></div>
                                 </div>
                             </div>
                             <div className="fixed bottom-0 left-0 w-full p-6 bg-[#F5F5F0]/90 backdrop-blur border-t z-[70] flex justify-center pb-8 safe-area-pb">
-                                <button onClick={() => setView('card')} className="w-full max-w-sm bg-gradient-to-r from-[#B45309] to-[#D97706] text-white py-4 rounded-xl font-bold shadow-xl flex items-center justify-center gap-3 text-2xl active:scale-95 transition-all">
+                                <button onClick={() => setView('card')} className="w-full max-w-sm bg-gradient-to-r from-[#B45309] to-[#D97706] text-white py-4 rounded-xl font-bold shadow-xl flex items-center justify-center gap-3 text-2xl active:scale-95 transition-all font-serif">
                                     <Icon name="camera" size={28} /> 領取福卡
                                 </button>
                             </div>
                         </div>
                     )}
 
-                    {/* 福卡頁面 */}
+                    {/* 福卡頁面 (全面清理特殊符號) */}
                     {view === 'card' && selectedHex && (
-                        <div className="absolute inset-0 z-[70] flex flex-col items-center justify-center p-4 animate-fade-in">
+                        <div className="absolute inset-0 z-[70] flex flex-col items-center justify-center p-4 animate-fade-in overflow-y-auto">
                             <div className="absolute inset-0 bg-black/85 backdrop-blur-xl z-0"></div>
                             
-                            <div className="relative z-10 w-full max-w-sm paper-bg rounded-3xl overflow-hidden shadow-2xl border-[10px] border-[#B45309] animate-card-glow flex flex-col text-yellow-950">
+                            <div className="relative z-10 w-[92%] max-w-sm paper-bg rounded-3xl overflow-hidden shadow-2xl border-[10px] border-[#B45309] animate-card-glow shrink-0 flex flex-col text-yellow-950">
                                 <div className="absolute inset-2 border border-[#B45309]/30 rounded-2xl pointer-events-none z-20"></div>
                                 <CornerDecor className="absolute top-6 left-6 w-10 h-10 z-30 opacity-70" />
                                 <CornerDecor className="absolute top-6 right-6 w-10 h-10 z-30 rotate-90 opacity-70" />
@@ -337,37 +329,44 @@
                                 <CornerDecor className="absolute bottom-6 right-6 w-10 h-10 z-30 rotate-180 opacity-70" />
 
                                 <div className="bg-gradient-to-br from-[#991B1B] via-[#DC2626] to-[#991B1B] p-8 text-center text-white relative shadow-inner overflow-hidden border-b-2 border-yellow-600/30">
-                                    <div className="text-yellow-400 text-[10px] tracking-[0.5em] mb-4 uppercase font-bold opacity-80 z-10">Fortune Card</div>
+                                    <CloudImage className="absolute -top-10 -left-10 w-56 opacity-40 animate-float" />
+                                    <CloudImage className="absolute -bottom-10 -right-10 w-56 opacity-40 animate-float rotate-180" style={{animationDelay: '-3s'}} />
+                                    
+                                    <div className="text-yellow-400 text-[10px] tracking-[0.5em] mb-4 uppercase font-bold opacity-80 z-10 font-serif">Fortune Card</div>
+                                    
                                     <div className="w-16 h-16 mx-auto rounded-full border-2 border-yellow-400 flex items-center justify-center bg-white/10 backdrop-blur-sm mb-4 shadow-lg">
                                         <Icon name="sparkles" size={32} className="text-yellow-200" />
                                     </div>
+                                    
                                     <h1 className="text-5xl font-bold mb-2 tracking-widest font-serif z-10 drop-shadow-lg">{selectedHex.name}</h1>
-                                    <p className="text-xl text-yellow-300 font-bold z-10 font-serif tracking-[0.2em]">{selectedHex.lucky}</p>
+                                    <p className="text-xl text-yellow-300 font-bold z-10 font-serif tracking-[0.2em]">{selectedHex.lucky || "吉星高照"}</p>
                                 </div>
 
-                                <div className="relative p-10 min-h-[300px] flex flex-col items-center justify-center text-center">
+                                <div className="relative p-8 min-h-[300px] flex flex-col items-center justify-center text-center">
                                     <div className="relative z-10 w-full font-serif">
-                                        <div className="text-[#991B1B] text-base mb-6 tracking-[0.3em] font-bold">— 崇正寶宮 靈籤指引 —</div>
-                                        <div className="text-gray-900 font-serif leading-relaxed text-2xl py-8 px-4 border-y border-[#B45309]/10 bg-white/50 rounded-2xl shadow-inner italic">
+                                        <div className="text-[#991B1B] text-base mb-4 tracking-[0.3em] font-bold">— 崇正寶宮 靈籤指引 —</div>
+                                        <div className="text-gray-900 font-serif leading-relaxed text-2xl py-8 px-4 border-y border-[#B45309]/10 bg-white/50 rounded-2xl shadow-inner">
                                             {selectedHex.text}
                                         </div>
                                     </div>
-                                    <div className="relative z-10 flex justify-between items-end w-full mt-12 px-2 text-left">
+                                    <div className="relative z-10 flex justify-between items-end w-full mt-10 px-2 text-left">
                                         <div className="text-[#B45309] font-serif border-l-2 border-[#B45309]/30 pl-4">
                                             <p className="text-[8px] uppercase tracking-widest mb-1 font-bold opacity-60">Authentication Date</p>
                                             <p className="font-bold text-gray-800 text-base">{new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                                         </div>
-                                        <PalaceSeal className="w-20 h-20 shadow-lg" />
+                                        <div className="transition-all duration-700">
+                                            <PalaceSeal className="w-20 h-20 shadow-lg" />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div className="mt-8 flex flex-col gap-4 w-full max-w-[300px] relative z-20">
-                                <button onClick={reset} className="w-full bg-gradient-to-r from-[#B45309] to-[#D97706] text-white px-8 py-4 rounded-full font-bold shadow-xl flex items-center justify-center gap-3 text-xl active:scale-95 transition-all">
+                            <div className="mt-8 flex flex-col gap-4 w-[92%] max-w-[300px] relative z-20 text-yellow-50 text-center">
+                                <button onClick={reset} className="w-full bg-gradient-to-r from-[#B45309] to-[#D97706] text-white px-8 py-4 rounded-full font-bold shadow-xl flex items-center justify-center gap-3 text-xl active:scale-95 transition-all font-serif">
                                     <Icon name="rotate-ccw" size={24} />
-                                    再求一支靈籤
+                                    <span>再求一支靈籤</span>
                                 </button>
-                                <button onClick={() => setView('result')} className="text-yellow-500/80 hover:text-yellow-300 text-lg font-bold transition-all">返回解籤詳解</button>
+                                <button onClick={() => setView('result')} className="text-yellow-500/80 hover:text-yellow-300 text-lg font-bold transition-all font-serif">返回解籤</button>
                             </div>
                             <button onClick={() => setView('result')} className="absolute top-6 right-6 text-white/40 p-2"><Icon name="x" size={32} /></button>
                         </div>
